@@ -110,45 +110,45 @@
   }
 }
 
-  /* Gradients for visual appeal */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
-  --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-light)));
-  --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-light)));
-  
-  /* Shadows for depth */
-  --shadow-soft: 0 4px 16px -2px hsl(var(--primary) / 0.1);
-  --shadow-card: 0 2px 8px -1px hsl(var(--border) / 0.3);
-  
-  /* Animations */
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-/* Custom animations for financial progress */
-@keyframes progress-fill {
-  from { width: 0%; }
-  to { width: var(--progress-value); }
-}
-
-@keyframes pulse-green {
-  0%, 100% { 
-    box-shadow: 0 0 0 0 hsl(var(--success) / 0.7);
-  }
-  70% { 
-    box-shadow: 0 0 0 10px hsl(var(--success) / 0);
-  }
-}
-
-.progress-animate {
-  animation: progress-fill 1.5s ease-out forwards;
-}
-
-.pulse-success {
-  animation: pulse-green 2s infinite;
-}
-}
-
 @layer base {
+  :root {
+    /* Gradients for visual appeal */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-light)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-light)));
+    
+    /* Shadows for depth */
+    --shadow-soft: 0 4px 16px -2px hsl(var(--primary) / 0.1);
+    --shadow-card: 0 2px 8px -1px hsl(var(--border) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Custom animations for financial progress */
+  @keyframes progress-fill {
+    from { width: 0%; }
+    to { width: var(--progress-value); }
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { 
+      box-shadow: 0 0 0 0 hsl(var(--success) / 0.7);
+    }
+    70% { 
+      box-shadow: 0 0 0 10px hsl(var(--success) / 0);
+    }
+  }
+
+  .progress-animate {
+    animation: progress-fill 1.5s ease-out forwards;
+  }
+
+  .pulse-success {
+    animation: pulse-green 2s infinite;
+  }
+
   * {
     @apply border-border;
   }
