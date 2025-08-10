@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Target, Wallet, Plus, MessageSquare, BarChart3, Lightbulb, Goal } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Wallet, Plus, MessageSquare, BarChart3, Lightbulb, Goal, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/hooks/useUserData";
 import AddTransactionForm from "./AddTransactionForm";
 import SmsParserForm from "./SmsParserForm";
 import TransactionList from "./TransactionList";
@@ -11,6 +13,7 @@ import FinancialCharts from "./FinancialCharts";
 import FinancialInsights from "./FinancialInsights";
 import GoalTracker from "./GoalTracker";
 import { Transaction, SavingsGoal } from "@/types/finance";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demo
 const mockTransactions: Transaction[] = [
@@ -58,8 +61,18 @@ const mockSavingsGoals: SavingsGoal[] = [
 ];
 
 export default function Dashboard() {
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
-  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(mockSavingsGoals);
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const {
+    transactions,
+    savingsGoals,
+    loading,
+    addTransaction: addUserTransaction,
+    addSavingsGoal,
+    updateSavingsGoal,
+    deleteSavingsGoal
+  } = useUserData();
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [showSmsParser, setShowSmsParser] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -70,49 +83,128 @@ export default function Dashboard() {
   const netBalance = totalIncome - totalExpenses;
   const financialHealthScore = Math.min(Math.max((netBalance / totalIncome) * 100, 0), 100);
 
-  const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString()
-    };
-    setTransactions([newTransaction, ...transactions]);
-    setShowAddForm(false);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const addParsedTransaction = (transaction: Omit<Transaction, "id">) => {
-    addTransaction(transaction);
-    setShowSmsParser(false);
+  const addTransaction = async (transaction: Omit<Transaction, "id">) => {
+    try {
+      await addUserTransaction(transaction);
+      setShowAddForm(false);
+      toast({
+        title: "Transaction added",
+        description: "Your transaction has been saved successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const addGoal = (goal: Omit<SavingsGoal, "id">) => {
-    const newGoal: SavingsGoal = {
-      ...goal,
-      id: Date.now().toString()
-    };
-    setSavingsGoals([...savingsGoals, newGoal]);
+  const addParsedTransaction = async (transaction: Omit<Transaction, "id">) => {
+    try {
+      await addTransaction(transaction);
+      setShowSmsParser(false);
+    } catch (error) {
+      // Error already handled in addTransaction
+    }
   };
 
-  const updateGoal = (goalId: string, amount: number) => {
-    setSavingsGoals(goals => 
-      goals.map(goal => 
-        goal.id === goalId 
-          ? { ...goal, currentAmount: goal.currentAmount + amount }
-          : goal
-      )
+  const addGoal = async (goal: Omit<SavingsGoal, "id">) => {
+    try {
+      await addSavingsGoal(goal);
+      toast({
+        title: "Goal created",
+        description: "Your savings goal has been created successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to create goal. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateGoal = async (goalId: string, amount: number) => {
+    try {
+      const goal = savingsGoals.find(g => g.id === goalId);
+      if (goal) {
+        await updateSavingsGoal(goalId, goal.currentAmount + amount);
+        toast({
+          title: "Goal updated",
+          description: `Added KSh ${amount.toLocaleString()} to your goal.`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to update goal. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteGoal = async (goalId: string) => {
+    try {
+      await deleteSavingsGoal(goalId);
+      toast({
+        title: "Goal deleted",
+        description: "Your savings goal has been deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete goal. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light/10 to-secondary-light/10">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your financial data...</p>
+        </div>
+      </div>
     );
-  };
-
-  const deleteGoal = (goalId: string) => {
-    setSavingsGoals(goals => goals.filter(goal => goal.id !== goalId));
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light/10 to-secondary-light/10 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-primary">M-Shika Pro</h1>
-          <p className="text-muted-foreground">Your smart finance companion</p>
+        <div className="flex justify-between items-center">
+          <div className="text-center space-y-2 flex-1">
+            <h1 className="text-3xl font-bold text-primary">M-Shika Pro</h1>
+            <p className="text-muted-foreground">Welcome back, {user?.email}</p>
+          </div>
+          <Button 
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
 
         {/* Navigation Tabs */}
