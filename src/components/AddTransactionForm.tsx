@@ -17,7 +17,7 @@ export default function AddTransactionForm({ onSubmit, onCancel }: AddTransactio
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<Transaction["paymentMethod"]>("M-Pesa");
+  const [paymentMethod, setPaymentMethod] = useState<Transaction["payment_method"]>("M-Pesa");
   const [isIncome, setIsIncome] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,7 +30,7 @@ export default function AddTransactionForm({ onSubmit, onCancel }: AddTransactio
       category: isIncome ? "Income" : category,
       description: description || "",
       date: new Date().toISOString(),
-      paymentMethod
+      payment_method: paymentMethod
     };
 
     onSubmit(transaction);
@@ -101,7 +101,7 @@ export default function AddTransactionForm({ onSubmit, onCancel }: AddTransactio
 
             <div className="space-y-2">
               <Label htmlFor="payment-method">Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={(value: Transaction["paymentMethod"]) => setPaymentMethod(value)}>
+              <Select value={paymentMethod} onValueChange={(value: Transaction["payment_method"]) => setPaymentMethod(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

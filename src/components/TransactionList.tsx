@@ -98,9 +98,9 @@ export default function TransactionList({ transactions }: TransactionListProps) 
                         <p className="font-medium text-sm truncate">{transaction.description || transaction.category}</p>
                         <Badge 
                           variant="secondary" 
-                          className={`text-xs ${getPaymentMethodColor(transaction.paymentMethod)}`}
+                          className={`text-xs ${getPaymentMethodColor(transaction.payment_method)}`}
                         >
-                          {transaction.paymentMethod}
+                          {transaction.payment_method}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">

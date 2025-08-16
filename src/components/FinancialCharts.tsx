@@ -53,7 +53,7 @@ export default function FinancialCharts({ transactions }: FinancialChartsProps) 
   const paymentMethodData = transactions
     .filter(t => t.amount < 0)
     .reduce((acc, transaction) => {
-      const method = transaction.paymentMethod;
+      const method = transaction.payment_method;
       const existing = acc.find(item => item.method === method);
       if (existing) {
         existing.amount += Math.abs(transaction.amount);

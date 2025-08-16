@@ -43,7 +43,7 @@ function parseMpesaSms(smsText: string): Partial<Transaction> | null {
   return {
     amount: isReceived ? amount : -amount,
     description,
-    paymentMethod: "M-Pesa" as const,
+    payment_method: "M-Pesa" as const,
     date: new Date().toISOString()
   };
 }
@@ -80,7 +80,7 @@ export default function SmsParserForm({ onSubmit, onCancel }: SmsParserFormProps
       category: parsedTransaction.amount! > 0 ? "Income" : category,
       description: parsedTransaction.description!,
       date: parsedTransaction.date!,
-      paymentMethod: "M-Pesa"
+      payment_method: "M-Pesa"
     };
     
     onSubmit(transaction);

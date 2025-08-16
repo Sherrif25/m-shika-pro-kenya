@@ -67,7 +67,7 @@ export default function FinancialInsights({ transactions }: FinancialInsightsPro
   });
 
   // M-Pesa usage insight
-  const mpesaTransactions = transactions.filter(t => t.paymentMethod === 'M-Pesa' && t.amount < 0);
+  const mpesaTransactions = transactions.filter(t => t.payment_method === 'M-Pesa' && t.amount < 0);
   const mpesaPercentage = totalExpenses > 0 ? (mpesaTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) / totalExpenses) * 100 : 0;
   
   if (mpesaPercentage > 70) {

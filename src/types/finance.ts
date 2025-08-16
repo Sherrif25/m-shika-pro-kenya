@@ -4,7 +4,7 @@ export interface Transaction {
   category: string;
   description: string;
   date: string;
-  paymentMethod: "M-Pesa" | "Cash" | "Bank" | "Card";
+  payment_method: "M-Pesa" | "Cash" | "Bank" | "Card";
 }
 
 export interface SavingsGoal {

@@ -23,7 +23,7 @@ const mockTransactions: Transaction[] = [
     category: "Food",
     description: "Lunch at Java House",
     date: new Date().toISOString(),
-    paymentMethod: "M-Pesa"
+    payment_method: "M-Pesa"
   },
   {
     id: "2", 
@@ -31,7 +31,7 @@ const mockTransactions: Transaction[] = [
     category: "Income",
     description: "Salary payment",
     date: new Date(Date.now() - 86400000).toISOString(),
-    paymentMethod: "Bank"
+    payment_method: "Bank"
   },
   {
     id: "3",
@@ -39,7 +39,7 @@ const mockTransactions: Transaction[] = [
     category: "Transport",
     description: "Matatu fare",
     date: new Date(Date.now() - 172800000).toISOString(),
-    paymentMethod: "Cash"
+    payment_method: "Cash"
   }
 ];
 
