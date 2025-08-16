@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.683804a1387f4ba6b92e30de050826a9',
+  appId: 'com.lovable.mshikaprokenya',
   appName: 'm-shika-pro-kenya',
   webDir: 'dist',
   server: {
