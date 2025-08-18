@@ -22,6 +22,15 @@ export interface Category {
   icon: string;
 }
 
+export interface BudgetTarget {
+  id: string;
+  category: string;
+  monthlyLimit: number;
+  currentSpent: number;
+  period: "weekly" | "monthly";
+  user_id?: string;
+}
+
 export const TRANSACTION_CATEGORIES = [
   "Food",
   "Transport", 

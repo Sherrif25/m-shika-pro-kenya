@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { Transaction, SavingsGoal } from '@/types/finance'
+import type { Transaction, SavingsGoal, BudgetTarget } from '@/types/finance'
 
 export function useUserData() {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([])
+  const [budgetTargets, setBudgetTargets] = useState<BudgetTarget[]>([])
   const [loading, setLoading] = useState(true)
 
   // Load user data when user changes
@@ -16,6 +17,7 @@ export function useUserData() {
     } else {
       setTransactions([])
       setSavingsGoals([])
+      setBudgetTargets([])
       setLoading(false)
     }
   }, [user])
@@ -43,8 +45,17 @@ export function useUserData() {
 
       if (goalsError) throw goalsError
 
+      // Load budget targets
+      const { data: budgetData, error: budgetError } = await supabase
+        .from('budget_targets')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (budgetError) throw budgetError
+
       setTransactions(transactionsData || [])
       setSavingsGoals(goalsData || [])
+      setBudgetTargets(budgetData || [])
     } catch (error) {
       console.error('Error loading user data:', error)
     } finally {
@@ -132,14 +143,79 @@ export function useUserData() {
     }
   }
 
+  const addBudgetTarget = async (budget: Omit<BudgetTarget, 'id' | 'user_id' | 'currentSpent'>) => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('budget_targets')
+        .insert([{ ...budget, user_id: user.id, current_spent: 0 }])
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setBudgetTargets(prev => [...prev, data])
+    } catch (error) {
+      console.error('Error adding budget target:', error)
+      throw error
+    }
+  }
+
+  const updateBudgetTarget = async (budgetId: string, monthlyLimit: number) => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('budget_targets')
+        .update({ monthly_limit: monthlyLimit })
+        .eq('id', budgetId)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setBudgetTargets(prev => 
+        prev.map(budget => budget.id === budgetId ? data : budget)
+      )
+    } catch (error) {
+      console.error('Error updating budget target:', error)
+      throw error
+    }
+  }
+
+  const deleteBudgetTarget = async (budgetId: string) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('budget_targets')
+        .delete()
+        .eq('id', budgetId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      setBudgetTargets(prev => prev.filter(budget => budget.id !== budgetId))
+    } catch (error) {
+      console.error('Error deleting budget target:', error)
+      throw error
+    }
+  }
+
   return {
     transactions,
     savingsGoals,
+    budgetTargets,
     loading,
     addTransaction,
     addSavingsGoal,
     updateSavingsGoal,
     deleteSavingsGoal,
+    addBudgetTarget,
+    updateBudgetTarget,
+    deleteBudgetTarget,
     refreshData: loadUserData
   }
 }

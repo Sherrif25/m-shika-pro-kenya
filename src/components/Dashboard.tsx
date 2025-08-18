@@ -12,6 +12,7 @@ import TransactionList from "./TransactionList";
 import FinancialCharts from "./FinancialCharts";
 import FinancialInsights from "./FinancialInsights";
 import GoalTracker from "./GoalTracker";
+import BudgetTracker from "./BudgetTracker";
 import { Transaction, SavingsGoal } from "@/types/finance";
 import { useToast } from "@/hooks/use-toast";
 
@@ -66,11 +67,15 @@ export default function Dashboard() {
   const {
     transactions,
     savingsGoals,
+    budgetTargets,
     loading,
     addTransaction: addUserTransaction,
     addSavingsGoal,
     updateSavingsGoal,
-    deleteSavingsGoal
+    deleteSavingsGoal,
+    addBudgetTarget,
+    updateBudgetTarget,
+    deleteBudgetTarget
   } = useUserData();
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -176,6 +181,54 @@ export default function Dashboard() {
     }
   };
 
+  const addBudget = async (budget: any) => {
+    try {
+      await addBudgetTarget(budget);
+      toast({
+        title: "Budget created",
+        description: "Your budget target has been created successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to create budget. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateBudget = async (budgetId: string, monthlyLimit: number) => {
+    try {
+      await updateBudgetTarget(budgetId, monthlyLimit);
+      toast({
+        title: "Budget updated",
+        description: "Your budget limit has been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to update budget. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteBudget = async (budgetId: string) => {
+    try {
+      await deleteBudgetTarget(budgetId);
+      toast({
+        title: "Budget deleted",
+        description: "Your budget target has been deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete budget. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light/10 to-secondary-light/10">
@@ -209,7 +262,7 @@ export default function Dashboard() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-fit lg:grid-cols-4 mx-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-fit lg:grid-cols-5 mx-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -217,6 +270,10 @@ export default function Dashboard() {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="budgets" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Budgets</span>
             </TabsTrigger>
             <TabsTrigger value="goals" className="flex items-center gap-2">
               <Goal className="h-4 w-4" />
@@ -311,6 +368,60 @@ export default function Dashboard() {
               </Button>
             </div>
 
+            {/* Budget Overview */}
+            {budgetTargets.length > 0 && (
+              <Card className="shadow-md">
+                <CardHeader>
+                  <CardTitle>Budget Overview</CardTitle>
+                  <CardDescription>This month's spending vs targets</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {budgetTargets.slice(0, 3).map((budget) => {
+                      const getCurrentMonthSpending = (category: string) => {
+                        const now = new Date();
+                        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                        return transactions
+                          .filter(t => 
+                            t.category === category && 
+                            t.amount < 0 && 
+                            new Date(t.date) >= startOfMonth
+                          )
+                          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                      };
+                      
+                      const currentSpent = getCurrentMonthSpending(budget.category);
+                      const progress = (currentSpent / budget.monthlyLimit) * 100;
+                      
+                      return (
+                        <div key={budget.id} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-medium">{budget.category}</h4>
+                            <span className="text-sm text-muted-foreground">
+                              KSh {currentSpent.toLocaleString()} / KSh {budget.monthlyLimit.toLocaleString()}
+                            </span>
+                          </div>
+                          <Progress value={Math.min(progress, 100)} className="h-2" />
+                          <p className={`text-xs ${progress >= 100 ? 'text-destructive' : progress >= 80 ? 'text-warning' : 'text-muted-foreground'}`}>
+                            {Math.round(progress)}% used • KSh {(budget.monthlyLimit - currentSpent).toLocaleString()} {currentSpent > budget.monthlyLimit ? 'over budget' : 'remaining'}
+                          </p>
+                        </div>
+                      );
+                    })}
+                    {budgetTargets.length > 3 && (
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => setActiveTab("budgets")}
+                        className="w-full mt-2"
+                      >
+                        View All Budgets ({budgetTargets.length})
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Savings Goals Summary */}
             <Card className="shadow-md">
               <CardHeader>
@@ -356,6 +467,17 @@ export default function Dashboard() {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <FinancialCharts transactions={transactions} />
+          </TabsContent>
+
+          {/* Budget Tab */}
+          <TabsContent value="budgets" className="space-y-6">
+            <BudgetTracker 
+              budgets={budgetTargets}
+              transactions={transactions}
+              onAddBudget={addBudget}
+              onUpdateBudget={updateBudget}
+              onDeleteBudget={deleteBudget}
+            />
           </TabsContent>
 
           {/* Goals Tab */}
