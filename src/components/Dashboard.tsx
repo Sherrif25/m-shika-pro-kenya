@@ -13,6 +13,7 @@ import FinancialCharts from "./FinancialCharts";
 import FinancialInsights from "./FinancialInsights";
 import GoalTracker from "./GoalTracker";
 import BudgetTracker from "./BudgetTracker";
+import IncomeTracker from "./IncomeTracker";
 import { Transaction, SavingsGoal } from "@/types/finance";
 import { useToast } from "@/hooks/use-toast";
 
@@ -68,6 +69,7 @@ export default function Dashboard() {
     transactions,
     savingsGoals,
     budgetTargets,
+    incomeStreams,
     loading,
     addTransaction: addUserTransaction,
     addSavingsGoal,
@@ -75,18 +77,20 @@ export default function Dashboard() {
     deleteSavingsGoal,
     addBudgetTarget,
     updateBudgetTarget,
-    deleteBudgetTarget
+    deleteBudgetTarget,
+    addIncomeStream,
+    updateIncomeStream,
+    deleteIncomeStream
   } = useUserData();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showSmsParser, setShowSmsParser] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Calculate financial summary
+  // Calculate financial summary (separated income and expenses for discipline focus)
   const totalIncome = transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = Math.abs(transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0));
-  const netBalance = totalIncome - totalExpenses;
-  const financialHealthScore = Math.min(Math.max((netBalance / totalIncome) * 100, 0), 100);
+  const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
   const handleSignOut = async () => {
     try {
@@ -229,6 +233,54 @@ export default function Dashboard() {
     }
   };
 
+  const addIncome = async (income: any) => {
+    try {
+      await addIncomeStream(income);
+      toast({
+        title: "Income stream added",
+        description: "Your income source has been configured successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to add income stream. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateIncome = async (incomeId: string, updates: any) => {
+    try {
+      await updateIncomeStream(incomeId, updates);
+      toast({
+        title: "Income stream updated",
+        description: "Your income source has been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to update income stream. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteIncome = async (incomeId: string) => {
+    try {
+      await deleteIncomeStream(incomeId);
+      toast({
+        title: "Income stream deleted",
+        description: "Your income source has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete income stream. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light/10 to-secondary-light/10">
@@ -262,18 +314,22 @@ export default function Dashboard() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-fit lg:grid-cols-5 mx-auto">
+          <TabsList className="grid w-full grid-cols-6 lg:w-fit lg:grid-cols-6 mx-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Analytics</span>
+            <TabsTrigger value="income" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Income</span>
             </TabsTrigger>
             <TabsTrigger value="budgets" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Budgets</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="goals" className="flex items-center gap-2">
               <Goal className="h-4 w-4" />
@@ -287,29 +343,30 @@ export default function Dashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Financial Health Score */}
+            {/* Financial Discipline Score */}
             <Card className="bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="h-5 w-5" />
-                  Financial Health Score
+                  Financial Discipline Score
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="text-3xl font-bold">{Math.round(financialHealthScore)}%</div>
-                  <Progress value={financialHealthScore} className="h-3 bg-white/20" />
+                  <div className="text-3xl font-bold">{Math.max(Math.round(savingsRate), 0)}%</div>
+                  <Progress value={Math.max(savingsRate, 0)} className="h-3 bg-white/20" />
                   <p className="text-sm text-white/90">
-                    {financialHealthScore >= 70 ? "Excellent! Keep it up!" : 
-                     financialHealthScore >= 50 ? "Good progress, small improvements needed" :
-                     "Time to review your spending habits"}
+                    {savingsRate >= 20 ? "Excellent savings discipline!" : 
+                     savingsRate >= 10 ? "Good progress, keep building habits" :
+                     savingsRate >= 0 ? "Focus on reducing expenses" :
+                     "Expenses exceed income - time for urgent changes"}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="shadow-md hover:shadow-lg transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -330,20 +387,6 @@ export default function Dashboard() {
                       <p className="text-2xl font-bold text-destructive">KSh {totalExpenses.toLocaleString()}</p>
                     </div>
                     <TrendingDown className="h-8 w-8 text-destructive" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-md hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Net Balance</p>
-                      <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        KSh {netBalance.toLocaleString()}
-                      </p>
-                    </div>
-                    <Wallet className="h-8 w-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
@@ -464,9 +507,15 @@ export default function Dashboard() {
             <TransactionList transactions={transactions.slice(0, 8)} />
           </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <FinancialCharts transactions={transactions} />
+          {/* Income Tab */}
+          <TabsContent value="income" className="space-y-6">
+            <IncomeTracker 
+              incomeStreams={incomeStreams}
+              transactions={transactions}
+              onAddIncome={addIncome}
+              onUpdateIncome={updateIncome}
+              onDeleteIncome={deleteIncome}
+            />
           </TabsContent>
 
           {/* Budget Tab */}
@@ -478,6 +527,11 @@ export default function Dashboard() {
               onUpdateBudget={updateBudget}
               onDeleteBudget={deleteBudget}
             />
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <FinancialCharts transactions={transactions} />
           </TabsContent>
 
           {/* Goals Tab */}

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { Transaction, SavingsGoal, BudgetTarget } from '@/types/finance'
+import type { Transaction, SavingsGoal, BudgetTarget, IncomeStream } from '@/types/finance'
 
 export function useUserData() {
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([])
   const [budgetTargets, setBudgetTargets] = useState<BudgetTarget[]>([])
+  const [incomeStreams, setIncomeStreams] = useState<IncomeStream[]>([])
   const [loading, setLoading] = useState(true)
 
   // Load user data when user changes
@@ -18,6 +19,7 @@ export function useUserData() {
       setTransactions([])
       setSavingsGoals([])
       setBudgetTargets([])
+      setIncomeStreams([])
       setLoading(false)
     }
   }, [user])
@@ -53,9 +55,18 @@ export function useUserData() {
 
       if (budgetError) throw budgetError
 
+      // Load income streams
+      const { data: incomeData, error: incomeError } = await supabase
+        .from('income_streams')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (incomeError) throw incomeError
+
       setTransactions(transactionsData || [])
       setSavingsGoals(goalsData || [])
       setBudgetTargets(budgetData || [])
+      setIncomeStreams(incomeData || [])
     } catch (error) {
       console.error('Error loading user data:', error)
     } finally {
@@ -204,10 +215,72 @@ export function useUserData() {
     }
   }
 
+  const addIncomeStream = async (income: Omit<IncomeStream, 'id' | 'user_id'>) => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('income_streams')
+        .insert([{ ...income, user_id: user.id }])
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setIncomeStreams(prev => [...prev, data])
+    } catch (error) {
+      console.error('Error adding income stream:', error)
+      throw error
+    }
+  }
+
+  const updateIncomeStream = async (incomeId: string, updates: Partial<IncomeStream>) => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('income_streams')
+        .update(updates)
+        .eq('id', incomeId)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setIncomeStreams(prev => 
+        prev.map(income => income.id === incomeId ? data : income)
+      )
+    } catch (error) {
+      console.error('Error updating income stream:', error)
+      throw error
+    }
+  }
+
+  const deleteIncomeStream = async (incomeId: string) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('income_streams')
+        .delete()
+        .eq('id', incomeId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      setIncomeStreams(prev => prev.filter(income => income.id !== incomeId))
+    } catch (error) {
+      console.error('Error deleting income stream:', error)
+      throw error
+    }
+  }
+
   return {
     transactions,
     savingsGoals,
     budgetTargets,
+    incomeStreams,
     loading,
     addTransaction,
     addSavingsGoal,
@@ -216,6 +289,9 @@ export function useUserData() {
     addBudgetTarget,
     updateBudgetTarget,
     deleteBudgetTarget,
+    addIncomeStream,
+    updateIncomeStream,
+    deleteIncomeStream,
     refreshData: loadUserData
   }
 }

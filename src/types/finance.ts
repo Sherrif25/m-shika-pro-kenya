@@ -22,16 +22,18 @@ export interface Category {
   icon: string;
 }
 
-export interface BudgetTarget {
+export interface IncomeStream {
   id: string;
   category: string;
-  monthlyLimit: number;
-  currentSpent: number;
-  period: "weekly" | "monthly";
+  description: string;
+  amount: number;
+  frequency: "weekly" | "bi-weekly" | "monthly" | "quarterly" | "yearly" | "one-time";
+  nextDate: string;
+  isActive: boolean;
   user_id?: string;
 }
 
-export const TRANSACTION_CATEGORIES = [
+export const EXPENSE_CATEGORIES = [
   "Food",
   "Transport", 
   "Rent",
@@ -41,9 +43,35 @@ export const TRANSACTION_CATEGORIES = [
   "Healthcare",
   "Education",
   "Shopping",
-  "Income",
   "Other"
 ] as const;
+
+export const INCOME_CATEGORIES = [
+  "Salary",
+  "Freelance",
+  "Business",
+  "Investment",
+  "Rental",
+  "Commission",
+  "Bonus",
+  "Side Hustle",
+  "Gift",
+  "Other"
+] as const;
+
+export const TRANSACTION_CATEGORIES = [
+  ...EXPENSE_CATEGORIES,
+  ...INCOME_CATEGORIES
+] as const;
+
+export interface BudgetTarget {
+  id: string;
+  category: string;
+  monthlyLimit: number;
+  currentSpent: number;
+  period: "weekly" | "monthly";
+  user_id?: string;
+}
 
 export const PAYMENT_METHODS = [
   "M-Pesa",

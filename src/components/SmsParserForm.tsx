@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, MessageSquare } from "lucide-react";
-import { Transaction, TRANSACTION_CATEGORIES } from "@/types/finance";
+import { Transaction, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/types/finance";
 
 interface SmsParserFormProps {
   onSubmit: (transaction: Omit<Transaction, "id">) => void;
@@ -77,7 +77,7 @@ export default function SmsParserForm({ onSubmit, onCancel }: SmsParserFormProps
     
     const transaction: Omit<Transaction, "id"> = {
       amount: parsedTransaction.amount!,
-      category: parsedTransaction.amount! > 0 ? "Income" : category,
+      category: parsedTransaction.amount! > 0 ? category : category,
       description: parsedTransaction.description!,
       date: parsedTransaction.date!,
       payment_method: "M-Pesa"
@@ -147,21 +147,25 @@ export default function SmsParserForm({ onSubmit, onCancel }: SmsParserFormProps
                 </div>
               </div>
 
-              {parsedTransaction.amount! < 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={category} onValueChange={setCategory} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TRANSACTION_CATEGORIES.filter(cat => cat !== "Income").map((cat) => (
+              <div className="space-y-2">
+                <Label htmlFor="category">Transaction Category</Label>
+                <Select value={category} onValueChange={setCategory} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parsedTransaction?.amount && parsedTransaction.amount > 0 ? (
+                      INCOME_CATEGORIES.map((cat) => (
                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                      ))
+                    ) : (
+                      EXPENSE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="flex gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
@@ -170,7 +174,7 @@ export default function SmsParserForm({ onSubmit, onCancel }: SmsParserFormProps
                 <Button 
                   onClick={handleSubmit} 
                   className="flex-1 bg-gradient-to-r from-primary to-primary-dark"
-                  disabled={parsedTransaction.amount! < 0 && !category}
+                  disabled={!category}
                 >
                   Add Transaction
                 </Button>

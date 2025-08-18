@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, TrendingUp, TrendingDown, Plus, Edit, Trash2, Target } from "lucide-react";
-import { BudgetTarget, Transaction, TRANSACTION_CATEGORIES } from "@/types/finance";
+import { BudgetTarget, Transaction, EXPENSE_CATEGORIES } from "@/types/finance";
 
 interface BudgetTrackerProps {
   budgets: BudgetTarget[];
@@ -121,9 +121,9 @@ export default function BudgetTracker({ budgets, transactions, onAddBudget, onUp
   const totalSpent = budgetData.reduce((sum, b) => sum + b.currentSpent, 0);
   const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-  // Get available categories (not already budgeted)
-  const availableCategories = TRANSACTION_CATEGORIES.filter(
-    cat => cat !== "Income" && !budgets.some(b => b.category === cat)
+  // Get available categories (expense categories only, not already budgeted)
+  const availableCategories = EXPENSE_CATEGORIES.filter(
+    cat => !budgets.some(b => b.category === cat)
   ) as string[];
 
   return (

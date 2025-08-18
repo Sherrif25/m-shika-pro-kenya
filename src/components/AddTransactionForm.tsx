@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
-import { Transaction, TRANSACTION_CATEGORIES, PAYMENT_METHODS } from "@/types/finance";
+import { Transaction, EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from "@/types/finance";
 
 interface AddTransactionFormProps {
   onSubmit: (transaction: Omit<Transaction, "id">) => void;
@@ -27,7 +27,7 @@ export default function AddTransactionForm({ onSubmit, onCancel }: AddTransactio
 
     const transaction: Omit<Transaction, "id"> = {
       amount: isIncome ? Math.abs(parseFloat(amount)) : -Math.abs(parseFloat(amount)),
-      category: isIncome ? "Income" : category,
+      category: isIncome ? category : category,
       description: description || "",
       date: new Date().toISOString(),
       payment_method: paymentMethod
@@ -83,21 +83,25 @@ export default function AddTransactionForm({ onSubmit, onCancel }: AddTransactio
               />
             </div>
 
-            {!isIncome && (
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRANSACTION_CATEGORIES.filter(cat => cat !== "Income").map((cat) => (
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={setCategory} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isIncome ? (
+                    INCOME_CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                    ))
+                  ) : (
+                    EXPENSE_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="payment-method">Payment Method</Label>
